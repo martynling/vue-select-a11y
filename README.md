@@ -1,6 +1,6 @@
 # vue-select-a11y
 
-> {
+A lightweight, accessible (#a11y) multi-select input.
 
 ## Build Setup
 

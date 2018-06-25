@@ -1,7 +1,7 @@
 {
   "name": "vue-select-a11y",
   "version": "1.0.0",
-  "description": "{",
+  "description": "A lightweight, accessible (#a11y) multi-select input",
   "author": "Martyn Ling <mling@str8-4ward.com>",
   "private": true,
   "scripts": {

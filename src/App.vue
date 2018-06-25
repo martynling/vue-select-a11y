@@ -36,7 +36,6 @@ export default {
   },
   methods: {
     selectChanged (e) {
-      console.log(e)
       this.myValue = e
     }
   }
