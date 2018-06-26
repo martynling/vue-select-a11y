@@ -5,6 +5,8 @@
          v-on:keyup.esc="closeList"
          v-on:keyup.up="previousItem"
          v-on:keyup.down="nextItem"
+         v-on:keyup.36="firstItem"
+         v-on:keyup.35="lastItem"
          v-on:keyup.space="toggleItem"
     >
         <span v-on:click="toggleShow">
@@ -87,6 +89,12 @@ export default {
     this.checkedItems = this.value
     this.baseId = `vsa11y-${Math.random().toString(36).substr(2, 5)}`
     this.allIsChecked = this.allItemsChecked
+    if (this.checkedItems.length) {
+      const firstItem = this.items.find((item) => item.key === this.checkedItems[0])
+      this.focusedItem = this.items.indexOf(firstItem)
+      console.log(this.focusedItem)
+      console.log(this.items)
+    }
   },
 
   data: function () {
@@ -136,6 +144,13 @@ export default {
       return this.focusedItem === index
     },
 
+    firstItem () {
+      if (this.showList) {
+        this.focusedItem = -1
+        this.setFocus()
+      }
+    },
+
     getItemId (index) {
       return `${this.baseId}-${index}`
     },
@@ -146,6 +161,13 @@ export default {
 
     itemClass (index) {
       return this.hasFocus(index) ? `focused` : ''
+    },
+
+    lastItem () {
+      if (this.showList) {
+        this.focusedItem = this.items.length - 1
+        this.setFocus()
+      }
     },
 
     nextItem () {
