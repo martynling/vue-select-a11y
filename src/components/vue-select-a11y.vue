@@ -1,7 +1,5 @@
 <template>
-    <div class="multi-select" role="combobox" tabIndex="0" aria-haspopup="true"
-         v-bind:area-expanded=showList
-         v-bind:aria-activedescendant="focusedId"
+    <div class="multi-select"
          v-on:keyup.enter="toggleShow"
          v-on:keyup.esc="closeList"
          v-on:keyup.up="previousItem"
@@ -10,51 +8,63 @@
          v-on:keyup.35="lastItem"
          v-on:keyup.space="toggleItem"
     >
-        <span v-bind:id=groupId v-on:click="toggleShow">
-            <label role="alert" aria-live="assertive" :aria-label=ariaSummaryText>{{ summaryText }}</label>
+        <button
+            aria-haspopup="listbox"
+            v-bind:id=groupId
+            v-bind:aria-expanded=showList
+            v-on:click="toggleShow"
+            v-bind:aria-label=ariaSummaryText
+        >
+            {{ summaryText }}
             <span class="chevron" aria-hidden="true">^</span>
-        </span>
-        <div v-if="showList">
-            <ul
+        </button>
+        <ul
+            role="listbox"
+            v-if="showList"
+            v-bind:aria-labelledby=groupId
+            v-bind:aria-activedescendant=focusedItemId
+        >
+            <li
+                role="option"
+                v-bind:class=itemClass(-1)
+                v-bind:aria-checked=allItemsChecked
+                v-bind:aria-selected=hasFocus(-1)
             >
-                <li
-                    v-bind:class=itemClass(-1)
-                    v-bind:aria-checked=allItemsChecked
-                    v-bind:aria-selected=hasFocus(-1)
-                >
-                    <label>
-                        <input type="checkbox"
-                               v-bind:name=inputName
-                               v-bind:checked=allIsChecked
-                               v-bind:id=getItemId(-1)
-                               v-bind:aria-labelledby=groupId
-                               v-on:click=toggleAll()
-                        />
-                        (All)
-                    </label>
-                </li>
-                <li v-for="(item, index) in items"
-                    v-bind:key="item.key"
-                    v-bind:class="itemClass(index)"
-                    v-bind:aria-checked="isChecked(item.key)"
-                    v-bind:aria-selected="hasFocus(index)"
-                >
-                    <label>
-                        <input type="checkbox"
-                               v-model="checkedItems"
-                               v-bind:name=inputName
-                               v-bind:value=item.key
-                               v-bind:id=getItemId(index)
-                               v-bind:aria-labelledby=groupId
-                               v-on:click=updated(index)
-                        />
-                        {{ item.value }}
-                    </label>
-                </li>
-            </ul>
-            <div class="multi-select-backdrop"></div>
-        </div>
-
+                <label :id=getItemLabelId(-1)>
+                    <input type="checkbox"
+                           v-bind:name=inputName
+                           v-bind:checked=allIsChecked
+                           v-bind:id=getItemId(-1)
+                           v-on:click=toggleAll()
+                           v-bind:aria-labelledby="getLabelledByIds(-1)"
+                    />
+                    (All)
+                </label>
+            </li>
+            <li v-for="(item, index) in items"
+                role="option"
+                v-bind:key="item.key"
+                v-bind:class="itemClass(index)"
+                v-bind:aria-checked="isChecked(item.key)"
+                v-bind:aria-selected="hasFocus(index)"
+            >
+                <label :id=getItemLabelId(index)>
+                    <input type="checkbox"
+                           v-model="checkedItems"
+                           v-bind:name=inputName
+                           v-bind:value=item.key
+                           v-bind:id=getItemId(index)
+                           v-on:click=updated(index)
+                           v-bind:aria-labelledby="getLabelledByIds(index)"
+                    />
+                    {{ item.value }}
+                </label>
+            </li>
+        </ul>
+        <div
+            class="multi-select-backdrop"
+            v-if="showList"
+        ></div>
     </div>
 </template>
 
@@ -63,10 +73,10 @@ export default {
   name: 'vue-select-a11y',
   props: {
     ariaSummaryEmpty: {
-      default: 'None selected.'
+      default: 'None selected. Select a value'
     },
     ariaSummary: {
-      default: 'Selected {count} of {total}'
+      default: 'Selected {count} of {total}. {selectedList}'
     },
     items: {
       type: Array,
@@ -88,7 +98,7 @@ export default {
   },
   created () {
     this.checkedItems = this.value
-    this.baseId = `vsa11y-${Math.random().toString(36).substr(2, 5)}`
+    this.baseId = `vsa11y${Math.random().toString(36).substr(2, 5)}`
     this.allIsChecked = this.allItemsChecked
     if (this.checkedItems.length) {
       const firstItem = this.items.find((item) => item.key === this.checkedItems[0])
@@ -110,18 +120,19 @@ export default {
     },
     ariaSummaryText () {
       if (this.checkedItems.length === 0) {
-        return this.ariaSummaryEmpty
+        return `${this.ariaSummaryEmpty}`
       } else {
         return this.ariaSummary
           .replace('{count}', this.checkedItems.length)
           .replace('{total}', this.items.length)
+          .replace('{selectedList}', this.selectedList)
       }
     },
-    focusedId () {
+    focusedItemId () {
       return this.getItemId(this.focusedItem)
     },
     groupId () {
-      return `${this.baseId}-group`
+      return `${this.baseId}group`
     },
     selectedList () {
       return this.checkedItems.map((key) => {
@@ -156,7 +167,15 @@ export default {
     },
 
     getItemId (index) {
-      return `${this.baseId}-${index}`
+      return `${this.baseId}${index}`
+    },
+
+    getItemLabelId (index) {
+      return `${this.baseId}label${index}`
+    },
+
+    getLabelledByIds (index) {
+      return `${this.getItemLabelId(index)}. ${this.groupId}`
     },
 
     isChecked (key) {
@@ -248,20 +267,18 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.multi-select, .multi-select-plugin {
+.multi-select {
     display: inline-block;
     position: relative;
     text-align: left;
 
-    > span {
+    > button {
         border: none;
         background: none;
         position: relative;
         padding: .25em .5em;
         padding-right: 1.5em;
-        display: block;
         border: solid 1px #000;
-        cursor: pointer;
 
         > .chevron {
             display: inline-block;
@@ -274,54 +291,51 @@ export default {
         }
     }
 
-    > div {
-        > ul {
-            position: absolute;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            left: 0;
-            top: 100%;
-            min-width: 100%;
-            z-index: 1300;
-            background: #fff;
-            border: 1px solid rgba(0, 0, 0, .15);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
-            display: block;
-            max-height: 320px;
-            overflow-x: hidden;
-            overflow-y: auto;
+    > ul {
+        position: absolute;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        left: 0;
+        top: 100%;
+        min-width: 100%;
+        z-index: 1300;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, .15);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+        display: block;
+        max-height: 320px;
+        overflow-x: hidden;
+        overflow-y: auto;
 
-            > li {
-                white-space: nowrap;
+        > li {
+            white-space: nowrap;
 
-                &.focused {
-                    background-color: LightBlue;
-                }
+            &.focused {
+                background-color: LightBlue;
+            }
 
-                &:focus {
-                    background-color: LightBlue;
-                }
+            &:focus {
+                background-color: LightBlue;
+            }
 
-                &:hover {
-                    background-color: DodgerBlue;
-                }
+            &:hover {
+                background-color: DodgerBlue;
+            }
 
-                > label {
-                    padding: .25em .5em;
-                    display: block;
-                }
+            > label {
+                padding: .25em .5em;
+                display: block;
             }
         }
-
-        &-backdrop {
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 1200;
-        }
+    }
+    &-backdrop {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1200;
     }
 }
 </style>
