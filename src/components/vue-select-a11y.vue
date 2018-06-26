@@ -1,6 +1,7 @@
 <template>
     <div class="multi-select" role="combobox" tabIndex="0" aria-haspopup="true"
          v-bind:area-expanded=showList
+         v-bind:aria-activedescendant="focusedId"
          v-on:keyup.enter="toggleShow"
          v-on:keyup.esc="closeList"
          v-on:keyup.up="previousItem"
@@ -9,7 +10,7 @@
          v-on:keyup.35="lastItem"
          v-on:keyup.space="toggleItem"
     >
-        <span v-on:click="toggleShow">
+        <span v-bind:id=groupId v-on:click="toggleShow">
             <label role="alert" aria-live="assertive" :aria-label=ariaSummaryText>{{ summaryText }}</label>
             <span class="chevron" aria-hidden="true">^</span>
         </span>
@@ -25,8 +26,8 @@
                         <input type="checkbox"
                                v-bind:name=inputName
                                v-bind:checked=allIsChecked
-                               v-bind:tabindex=tabIndex(-1)
                                v-bind:id=getItemId(-1)
+                               v-bind:aria-labelledby=groupId
                                v-on:click=toggleAll()
                         />
                         (All)
@@ -43,9 +44,9 @@
                                v-model="checkedItems"
                                v-bind:name=inputName
                                v-bind:value=item.key
-                               v-bind:tabindex=tabIndex(index)
                                v-bind:id=getItemId(index)
-                               v-on:click="updated(index)"
+                               v-bind:aria-labelledby=groupId
+                               v-on:click=updated(index)
                         />
                         {{ item.value }}
                     </label>
@@ -92,15 +93,12 @@ export default {
     if (this.checkedItems.length) {
       const firstItem = this.items.find((item) => item.key === this.checkedItems[0])
       this.focusedItem = this.items.indexOf(firstItem)
-      console.log(this.focusedItem)
-      console.log(this.items)
     }
   },
 
   data: function () {
     return {
       allIsChecked: false,
-      baseClass: '',
       focusedItem: -1,
       checkedItems: [],
       showList: false
@@ -118,6 +116,12 @@ export default {
           .replace('{count}', this.checkedItems.length)
           .replace('{total}', this.items.length)
       }
+    },
+    focusedId () {
+      return this.getItemId(this.focusedItem)
+    },
+    groupId () {
+      return `${this.baseId}-group`
     },
     selectedList () {
       return this.checkedItems.map((key) => {
@@ -195,11 +199,7 @@ export default {
     },
 
     setFocus () {
-      document.getElementById(this.getItemId(this.focusedItem)).focus()
-    },
-
-    tabIndex (index) {
-      return this.hasFocus(index) ? '0' : '-1'
+      this.$el.querySelector(`#${this.getItemId(this.focusedItem)}`).focus()
     },
 
     toggleItem () {
@@ -283,7 +283,7 @@ export default {
             left: 0;
             top: 100%;
             min-width: 100%;
-            z-index: 1000;
+            z-index: 1300;
             background: #fff;
             border: 1px solid rgba(0, 0, 0, .15);
             box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
@@ -295,25 +295,21 @@ export default {
             > li {
                 white-space: nowrap;
 
-                &.selected {
-                    > label {
-                        background-color: LightBlue;
-                    }
+                &.focused {
+                    background-color: LightBlue;
                 }
 
-                &.focused {
-                    > label {
-                        background-color: DodgerBlue;
-                    }
+                &:focus {
+                    background-color: LightBlue;
+                }
+
+                &:hover {
+                    background-color: DodgerBlue;
                 }
 
                 > label {
                     padding: .25em .5em;
                     display: block;
-
-                    &:focus, &:hover {
-                        background-color: DodgerBlue;
-                    }
                 }
             }
         }
@@ -324,7 +320,7 @@ export default {
             right: 0;
             bottom: 0;
             left: 0;
-            z-index: 900;
+            z-index: 1200;
         }
     }
 }
