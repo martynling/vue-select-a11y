@@ -8,7 +8,7 @@
          v-on:keyup.space="toggleItem"
     >
         <span v-on:click="toggleShow">
-            <label>{{ selectSummary }}</label>
+            <label role="alert" aria-live="assertive" :aria-label=ariaSummaryText>{{ summaryText }}</label>
             <span class="chevron" aria-hidden="true">^</span>
         </span>
         <div v-if="showList">
@@ -59,12 +59,24 @@
 export default {
   name: 'vue-select-a11y',
   props: {
+    ariaSummaryEmpty: {
+      default: 'None selected.'
+    },
+    ariaSummary: {
+      default: 'Selected {count} of {total}'
+    },
     items: {
       type: Array,
       required: true
     },
     inputName: {
       required: true
+    },
+    summary: {
+      default: '{selectedList}'
+    },
+    summaryEmpty: {
+      default: 'Select a value'
     },
     value: {
       type: Array,
@@ -74,6 +86,7 @@ export default {
   created () {
     this.checkedItems = this.value
     this.baseId = `vsa11y-${Math.random().toString(36).substr(2, 5)}`
+    this.allIsChecked = this.allItemsChecked
   },
 
   data: function () {
@@ -89,8 +102,29 @@ export default {
     allItemsChecked () {
       return (this.checkedItems.length === this.items.length)
     },
-    selectSummary () {
-      return 'Select a value'
+    ariaSummaryText () {
+      if (this.checkedItems.length === 0) {
+        return this.ariaSummaryEmpty
+      } else {
+        return this.ariaSummary
+          .replace('{count}', this.checkedItems.length)
+          .replace('{total}', this.items.length)
+      }
+    },
+    selectedList () {
+      return this.checkedItems.map((key) => {
+        return this.items.find((item) => item.key === key).value
+      }).join(',')
+    },
+    summaryText () {
+      if (this.checkedItems.length === 0) {
+        return this.summaryEmpty
+      } else {
+        return this.summary
+          .replace('{count}', this.checkedItems.length)
+          .replace('{total}', this.items.length)
+          .replace('{selectedList}', this.selectedList)
+      }
     }
   },
   methods: {
