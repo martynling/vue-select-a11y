@@ -1,5 +1,5 @@
 <template>
-    <div class="multi-select"
+    <div class="vue-select-a11y"
          v-on:keyup.enter="toggleShow"
          v-on:keyup.esc="closeList"
          v-on:keyup.up="previousItem"
@@ -76,7 +76,7 @@ export default {
       default: 'None selected. Select a value'
     },
     ariaSummary: {
-      default: 'Selected {count} of {total}. {selectedList}'
+      default: 'Selected {count} of {total}: {selectedList}'
     },
     items: {
       type: Array,
@@ -175,7 +175,7 @@ export default {
     },
 
     getLabelledByIds (index) {
-      return `${this.getItemLabelId(index)}. ${this.groupId}`
+      return `${this.getItemLabelId(index)}: ${this.groupId}`
     },
 
     isChecked (key) {
@@ -267,13 +267,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.multi-select {
+.vue-select-a11y {
     display: inline-block;
     position: relative;
     text-align: left;
 
     > button {
-        border: none;
+        font-size: 1em;
         background: none;
         position: relative;
         padding: .25em .5em;

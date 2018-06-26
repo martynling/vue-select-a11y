@@ -1,6 +1,7 @@
 <template>
   <div id="app" role="main">
     <vue-select-a11y
+            id="my-vue-select-a11y"
             input-name="languages"
             :items=countries
             :value=myValue
@@ -51,5 +52,11 @@ export default {
   text-align: left;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+#my-vue-select-a11y > button {
+  color: #2c3e50;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 </style>
