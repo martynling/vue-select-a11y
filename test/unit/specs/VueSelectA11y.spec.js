@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import VueSelectA11y from '@/components/vue-select-a11y'
 
 const languages = [
@@ -19,7 +19,7 @@ const factory = (params) => {
 
   Object.assign(props, params)
 
-  return shallowMount(VueSelectA11y, {
+  return mount(VueSelectA11y, {
     propsData: props
   })
 }
@@ -97,41 +97,59 @@ describe('vue-select-a11y.vue', () => {
     const wrapper = factory({
       value: ['en', 'fr']
     })
-    wrapper.find('button').trigger('click')
+    wrapper.vm.$data.showList = true
     wrapper.find('input').trigger('click') // The first input found is all
-    const listContainer = wrapper.find('ul')
-    expect(listContainer.isVisible()).toBe(true)
     // The list contains 'All' as an option in addition to languages
-    expect(listContainer.findAll('input[type="checkbox"]:checked').length).toBe(languages.length + 1)
+    expect(wrapper.find('ul').findAll('input[type="checkbox"]:checked').length).toBe(languages.length + 1)
     expect(wrapper.find('button').attributes()['aria-label']).toContain('Selected 5 of 5: English,French,Portuguese,Spanish,Arabic')
+  })
+
+  it('should emit changed event when all is clicked/checked', () => {
+    const wrapper = factory({
+      value: ['en', 'fr']
+    })
+    wrapper.vm.$data.showList = true
+    wrapper.find('input').trigger('click') // The first input found is all
+    let changedEvent = wrapper.emitted().changed
+    expect(changedEvent).toBeTruthy()
+    expect(changedEvent[0][0].length).toBe(languages.length)
+    expect(changedEvent[0][0]).toEqual(['en', 'fr', 'pt', 'es', 'ar'])
   })
 
   it('should uncheck all options when all is unchecked', () => {
     const wrapper = factory({
       value: ['en', 'fr']
     })
-    wrapper.find('button').trigger('click')
-    wrapper.find('input').trigger('click') // The first input found is all
-    wrapper.find('input').trigger('click') // The first input found is all
-    const listContainer = wrapper.find('ul')
-    expect(listContainer.isVisible()).toBe(true)
-    // The list contains 'All' as an option in addition to languages
-    expect(listContainer.findAll('input[type="checkbox"]:checked').length).toBe(0)
+    wrapper.vm.$data.showList = true
+    wrapper.find('input').trigger('click') // The first input found is all (check it)
+    wrapper.find('input').trigger('click') // The first input found is all (uncheck it)
+    expect(wrapper.find('ul').findAll('input[type="checkbox"]:checked').length).toBe(0)
     expect(wrapper.find('button').attributes()['aria-label']).toContain('None selected. Select a value')
     expect(wrapper.find('button').text()).toContain('Select a value')
   })
 
-  it('should uncheck the all option if all are checked and then one item is unchecked', () => {
+  it('should emit changed event when all is unchecked', () => {
     const wrapper = factory({
-      value: ['en', 'fr', 'pt', 'es', 'ar'] // all are checked
+      value: ['en', 'fr', 'pt', 'es', 'ar']
     })
-    wrapper.find('button').trigger('click')
-    const listContainer = wrapper.find('ul')
-    expect(listContainer.findAll('input[type="checkbox"]:checked').length).toBe(languages.length + 1)
-    wrapper.find('input').trigger('click') // The 2nd input found is one of the options
-    expect(listContainer.findAll('input[type="checkbox"]:checked').length).toBe(languages.length - 1)
-    expect(wrapper.find('button').attributes()['aria-label']).toContain('None selected. Select a value')
-    expect(wrapper.find('button').text()).toContain('Select a value')
+    wrapper.vm.$data.showList = true
+    wrapper.find('input').trigger('click') // The first input found is all
+    let changedEvent = wrapper.emitted().changed
+    expect(changedEvent).toBeTruthy()
+    expect(changedEvent[0][0].length).toBe(0)
+    expect(changedEvent[0][0]).toEqual([])
   })
 
+  it('should uncheck the all option if all are checked and then one item is unchecked', async () => {
+    const wrapper = factory({
+      value: ['en', 'fr', 'pt', 'es', 'ar']
+    })
+    wrapper.vm.$data.showList = true
+    console.log(wrapper.find('ul > li:last-child').find('input'), wrapper.find('ul > li:last-child').find('input').element, wrapper.find('ul > li:last-child').find('input').element.checked, wrapper.vm.$data.checkedItems)
+    wrapper.find('ul > li:last-child').find('input').setChecked(false)
+    await wrapper.vm.$nextTick()
+    console.log(wrapper.find('ul > li:last-child').find('input'), wrapper.find('ul > li:last-child').find('input').element, wrapper.find('ul > li:last-child').find('input').element.checked, wrapper.vm.$data.checkedItems)
+    expect(wrapper.vm.$data.checkedItems.length).toBe(4)
+    expect(wrapper.findAll('input[type="checkbox"]:checked').length).toBe(4) // I know this is wrong
+  })
 })

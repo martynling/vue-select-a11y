@@ -256,9 +256,11 @@ export default {
     },
 
     updated (index) {
+      console.log('Checkbox clicked')
       this.focusedItem = index
       this.$nextTick(() => {
         this.allIsChecked = this.allItemsChecked
+        console.log(`All checked: ${this.allIsChecked}`)
         this.$emit('changed', this.checkedItems)
       })
     }
